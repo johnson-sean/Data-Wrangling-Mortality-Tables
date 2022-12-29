@@ -1,7 +1,6 @@
-# Author: Sean Cerulean Johnson
-# Initial-Date: 2020-09-05
-# Update-Date: 2022-09-29
-
+# Author: Sean Johnson
+# Inception-Date: 2020-09-05
+# 
 # Data was collected from CDC mortality tables
 
 
@@ -14,6 +13,7 @@ library(stringr)
 library(tidyr)
 library(janitor)
 library(lubridate)
+library(Thematic)
 
 # Demographic ----
 dem<-here::here("data","dem")%>%
@@ -32,7 +32,7 @@ dem<-here::here("data","dem")%>%
   mutate(Year = paste0(20,substr(File.Source,5,6),"-12-31"),
          Year = case_when(Year == "2099-12-31" ~"1999-12-31",
                           TRUE ~Year),
-         Year = ymd(Year))%>%
+         Year = as.numeric(year(Year)))%>%
   select(Age, Year, Fields, Values, File.Source)
   
 
@@ -49,7 +49,7 @@ res<-here::here("data","res")%>%
   pivot_longer(!c(Birth.Place,File.Source), names_to = "Year", values_to = "Values")%>%
   filter(!Birth.Place=="")%>%
   ungroup()%>%
-  mutate(Year = ymd(paste0(Year,"-12-31")),
+  mutate(Year = as.numeric(year(ymd(paste0(Year,"-12-31")))),
          Values = as.numeric(as.factor(Values)),
          Age.Range = gsub(" ","",substr(File.Source,5,7)),
          Age.Range = case_when(Age.Range == "0"~"0",
@@ -66,3 +66,18 @@ res<-here::here("data","res")%>%
                                Age.Range == "ns"~"not stated"))%>%
   select(Birth.Place, Year, Age.Range, Values, File.Source)
   
+# Tables ----
+
+## dem ----
+dem%>%
+  filter(Year == 2007,
+         Age == "All")%>%
+  select(-File.Source)%>%
+  Thematic::tabGT()
+
+## res ----
+res%>%
+  filter(Year == 2007,
+         Birth.Place == "All_Places")%>%
+  select(-File.Source)%>%
+  Thematic::tabGT()
